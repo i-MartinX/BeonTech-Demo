@@ -147,3 +147,11 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Cypress and project outputs
+cypress/videos/
+cypress/screenshots/
+reports/
+
+# Local Cypress credentials (use cypress.env.example.json as the template)
+cypress.env.json
