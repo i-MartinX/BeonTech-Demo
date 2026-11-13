@@ -43,11 +43,18 @@ Alternatively, set `CYPRESS_apiUser`, `CYPRESS_apiPassword`, `CYPRESS_uiUser`, a
 
 ## Running the tests
 
+Short commands (headless by default):
+
+| Command       | What it runs                     |
+| ------------- | -------------------------------- |
+| `npm run all` | All specs (API and UI), headless |
+| `npm run api` | API spec only, headless          |
+| `npm run ui`  | UI spec only, headless           |
+
+Full names work the same way: `npm test` and `npm run test:all` (all specs), `npm run test:api`, and `npm run test:ui`. Two more commands:
+
 | Command                  | What it runs                 |
 | ------------------------ | ---------------------------- |
-| `npm test`               | All specs, headless          |
-| `npm run test:api`       | API spec only, headless      |
-| `npm run test:ui`        | UI spec only, headless       |
 | `npm run test:ui:headed` | UI spec in a visible browser |
 | `npm run open`           | Cypress interactive runner   |
 
@@ -88,6 +95,47 @@ If Cypress fails to start with `bad option: --smoke-test`, the shell has `ELECTR
 
 Pull requests from forks do not receive repository secrets, so their Cypress step cannot log in.
 
+## Quality and security libraries
+
+### What each library does
+
+| Library                      | Type       | Purpose in this project                                                                                                                                                               |
+| ---------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prettier                     | Formatting | Applies one code style to every file. Settings are in `.prettierrc.json` (no semicolons, single quotes, trailing commas, 100-character lines). CI fails when a file is not formatted. |
+| ESLint with `@eslint/js`     | Lint       | Finds likely bugs and unsafe code. The rules are in `eslint.config.mjs`.                                                                                                              |
+| `typescript-eslint`          | Lint       | Adds TypeScript-aware rules, such as flagging `any` types and unused variables.                                                                                                       |
+| `eslint-plugin-cypress`      | Lint       | Adds Cypress rules, such as catching async test functions and unsafe command chaining.                                                                                                |
+| `eslint-config-prettier`     | Lint       | Turns off ESLint style rules that conflict with Prettier, so the two tools never disagree.                                                                                            |
+| `globals`                    | Lint       | Lists the global names (`describe`, `cy`, `Cypress`) that ESLint should accept.                                                                                                       |
+| TypeScript (`strict` mode)   | Types      | Checks types across the whole project (`npm run typecheck`), catching wrong arguments and missing values before a test runs.                                                          |
+| ls-lint (`@ls-lint/ls-lint`) | Naming     | Checks file and folder names against `.ls-lint.yml`, for example `login.page.ts` and `booking.api.ts`.                                                                                |
+| npm audit                    | Security   | Compares installed packages with the npm advisory database. `npm run audit` fails on high or critical issues.                                                                         |
+| gitleaks                     | Security   | Scans the full git history for passwords and keys. `.gitleaks.toml` allows the example credentials file, which holds only the public demo logins.                                     |
+| CodeQL                       | Security   | GitHub's static analysis. Looks for risky code patterns in JavaScript and TypeScript and reports them under the Security tab.                                                         |
+| Dependabot                   | Security   | Opens pull requests when npm packages or GitHub Actions have newer versions, including security fixes. Settings are in `.github/dependabot.yml`.                                      |
+| cypress-mochawesome-reporter | Reporting  | Builds the HTML report that is published to GitHub Pages.                                                                                                                             |
+
+### Security decisions in the code
+
+- **No credentials in the repository.** Non-sensitive settings, such as the API URL, use `Cypress.expose()`. Passwords and usernames are read with `cy.env()`, which Cypress provides for sensitive values.
+- **Cypress 16.3.0.** Version 14.5.4 had two high-severity advisories in a dependency (`extract-zip`), so the project moved to 16.3.0.
+- **Least-privilege workflow permissions.** Every workflow starts with read-only access. Only the publish job can write to Pages, and only the CodeQL job can write security results.
+- **Only `master` publishes.** Pull request code is tested but never replaces the public report.
+
+### Workflow files (`.github/`)
+
+**`ci.yml`** runs three jobs in order:
+
+- **Triggers:** runs on a push to `master`, on every pull request, and on a manual **Run workflow** click.
+- **Concurrency:** a new run on the same branch cancels the older run that is still in progress.
+- **`quality`:** checks out the full git history (gitleaks needs it), installs the exact versions from `package-lock.json` with `npm ci`, then runs `npm run check`, `npm run audit`, and the gitleaks scan.
+- **`test`:** runs only when `quality` passes. The four `CYPRESS_*` variables are filled from repository secrets, and Cypress reads them as `apiUser`, `apiPassword`, `uiUser`, and `uiPassword`. `npm test` runs both specs. The summary and the artifact upload use `if: always()`, so they run even when a test fails.
+- **`publish-report`:** runs after `test` only on `master`, and only when `test` was not skipped. It downloads the report artifact, uploads it as the Pages artifact, deploys it, and writes the Pages link to the run summary. Its `pages` concurrency group queues deployments, so two runs cannot publish at the same time.
+
+**`codeql.yml`** runs on pushes and pull requests to `master`, and every Monday at 06:00 UTC. It sets up CodeQL for JavaScript and TypeScript, then analyzes the code. Only this job has `security-events: write`, so it can post results to the Security tab.
+
+**`dependabot.yml`** checks npm packages and GitHub Actions versions every week. The `dev-tooling` group puts all npm updates into one pull request, which keeps the review queue short.
+
 ## Project structure
 
 - **Specs (`cypress/e2e/`)** describe what is tested. They call page objects for the UI and API functions for HTTP, and do not use selectors or raw requests.
@@ -101,6 +149,7 @@ Pull requests from forks do not receive repository secrets, so their Cypress ste
 Values flow between API steps through Cypress aliases (`@token`, `@bookingId`), so each step reads the value the earlier step produced.
 
 ##
+
 <h3>Part 3: The Deliverables</h3>
 Because BEON engineers work seamlessly as embedded team members with U.S. clients, documentation and manual QA intuition are just as critical as automation.
 <br><br>
@@ -120,6 +169,7 @@ Because BEON engineers work seamlessly as embedded team members with U.S. client
 
 1.4 Typo found on 3rd work item description
 <br><br>
+
 | Field                  | Details                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Title**              | Once an item is added, we cannot remove it from the cart in the inventory page                                                                                                                                                                                                                                                                                                                                                                                                               |
