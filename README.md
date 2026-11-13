@@ -118,9 +118,8 @@ Pull requests from forks do not receive repository secrets, so their Cypress ste
 ### Security decisions in the code
 
 - **No credentials in the repository.** Non-sensitive settings, such as the API URL, use `Cypress.expose()`. Passwords and usernames are read with `cy.env()`, which Cypress provides for sensitive values.
-- **Cypress 16.3.0.** Version 14.5.4 had two high-severity advisories in a dependency (`extract-zip`), so the project moved to 16.3.0.
-- **Least-privilege workflow permissions.** Every workflow starts with read-only access. Only the publish job can write to Pages, and only the CodeQL job can write security results.
-- **Only `master` publishes.** Pull request code is tested but never replaces the public report.
+- Every workflow starts with read-only access. Only the publish job can write to Pages, and only the CodeQL job can write security results.
+- **Only `master` publishes.** Pull request code is tested but never replaces the public report. This is to enhance security
 
 ### Workflow files (`.github/`)
 
@@ -136,17 +135,17 @@ Pull requests from forks do not receive repository secrets, so their Cypress ste
 
 **`dependabot.yml`** checks npm packages and GitHub Actions versions every week. The `dev-tooling` group puts all npm updates into one pull request, which keeps the review queue short.
 
-## Project structure
 
-- **Specs (`cypress/e2e/`)** describe what is tested. They call page objects for the UI and API functions for HTTP, and do not use selectors or raw requests.
-- **Page objects (`cypress/pages/`)** hold process functions for each screen, such as `loginAs`, `addItemsToCart`, `fillInformation`, and `verifyOrderComplete`.
-- **Locators (`cypress/locators/`)** keep the selectors for each page in separate files, so a UI change touches one file.
-- **API layer (`cypress/api/booking.api.ts`)** has one function per endpoint. Each returns the raw response, so the spec decides what to assert and which value to pass on.
+
+## Procjet structure
+
+- **Specs (`cypress/e2e/`)** They call page objects for the UI and API functions for HTTP, and do not use selectors or raw requests to continue the order with POM (Page object model).
+- **Page objects (`cypress/pages/`)** functions for each screen
+- **Locators (`cypress/locators/`)** keep the selectors for each page in separate files
+- **API layer (`cypress/api/booking.api.ts`)** Each returns the raw response
 - **Data (`data/`)** holds test inputs as JSON, so the specs contain no hard-coded payloads.
-- **Config (`cypress.config.ts`)** holds the base URLs, the non-sensitive settings, and the reporter setup. Credentials come from `cypress.env.json` or CI secrets.
-- **Scripts (`scripts/ci-summary.mjs`)** turns the report into the pass/fail table on the CI run page.
-
-Values flow between API steps through Cypress aliases (`@token`, `@bookingId`), so each step reads the value the earlier step produced.
+- **Config (`cypress.config.ts`)** holds the base URLs. Credentials come from `cypress.env.json` or CI secrets.
+- **Scripts (`scripts/ci-summary.mjs`)** help to create the report into the pass/fail table on the CI run page.
 
 ##
 
