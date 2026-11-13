@@ -1,0 +1,8 @@
+title = "BeonTech-Demo secret scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "The example env file holds the public Restful-Booker and SauceDemo demo logins."
+paths = ['''cypress\.env\.example\.json''']

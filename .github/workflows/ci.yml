@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Format, lint, names, types, security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans the full git history
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Format, lint, file names, typecheck
+        run: npm run check
+
+      - name: Dependency audit (high and critical)
+        run: npm run audit
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Cypress tests
+    needs: quality
+    runs-on: ubuntu-latest
+    env:
+      # Credentials come from repository secrets. Cypress reads CYPRESS_<name> variables.
+      CYPRESS_apiUser: ${{ secrets.API_USER }}
+      CYPRESS_apiPassword: ${{ secrets.API_PASSWORD }}
+      CYPRESS_uiUser: ${{ secrets.UI_USER }}
+      CYPRESS_uiPassword: ${{ secrets.UI_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run Cypress (API and UI)
+        run: npm test
+
+      - name: Write pass/fail summary to the run page
+        if: always()
+        run: npm run summary
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-report
+          path: reports/mochawesome
+          retention-days: 14
+
+  publish-report:
+    name: Publish report to GitHub Pages
+    needs: test
+    # Only runs of the default branch publish, so unreviewed PR code never replaces the public report.
+    if: always() && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cypress-report
+          path: site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Link to the published report
+        run: 'echo "Full report: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"'
