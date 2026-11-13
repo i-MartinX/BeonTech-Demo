@@ -9,6 +9,16 @@ Cypress + TypeScript suite with two tests:
 
 **Published report:** the latest run is published to GitHub Pages on every push to `master`. The link appears on each CI run page.
 
+**Use the following dynamic link to understand the repo**
+[![Architecture diagram of i-martinx/beontech-demo](https://gitdiagram.com/i-martinx/beontech-demo/diagram.png)](https://gitdiagram.com/i-martinx/beontech-demo?utm_source=readme&utm_medium=picture)
+
+<figure align="center">
+  <img src="imgs\diagram.png" alt="Architecture diagram">
+  <figcaption><b>Figure 1:</b><i> Repo architecture overview.</i></figcaption>
+</figure>
+
+You can check the report of the test cases [at the following link](https://i-martinx.github.io/BeonTech-Demo/)
+
 ## Prerequisites
 
 - Node.js 18 or newer (tested with Node 22)
@@ -89,3 +99,39 @@ Pull requests from forks do not receive repository secrets, so their Cypress ste
 - **Scripts (`scripts/ci-summary.mjs`)** turns the report into the pass/fail table on the CI run page.
 
 Values flow between API steps through Cypress aliases (`@token`, `@bookingId`), so each step reads the value the earlier step produced.
+
+##
+<h3>Part 3: The Deliverables</h3>
+Because BEON engineers work seamlessly as embedded team members with U.S. clients, documentation and manual QA intuition are just as critical as automation.
+<br><br>
+
+1. Manual QA Bug Report (Simulated Jira Ticket)<br><br>
+   Instructions: Explore SauceDemo manually using the user problem_user.
+   [AI Boundary]: No AI allowed here. This requires human exploratory testing to spot visual and functional anomalies.
+   Find at least one bug caused by this user.
+   In your README, write a professional bug report (Title, Description, Steps to Reproduce, Expected vs. Actual Results, Severity).
+
+<h3>Bugs Detected:</h3>
+1.1 We cannot purchase due last name textbox is modifying the first name textbox
+
+1.2 Some items are not able to be added to the shopping cart
+
+1.3 Once and item is added, we cannot remove it from the cart in the inventory page
+
+1.4 Typo found on 3rd work item description
+<br><br>
+| Field                  | Details                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Title**              | Once an item is added, we cannot remove it from the cart in the inventory page                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Description**        | Add several items into the cart in the inventory page and then try to remove them                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Steps to Reproduce** | 1. Go to the login page<br>&nbsp;&nbsp;&nbsp;&nbsp;- **URL:** https://www.saucedemo.com<br>2. Log in with the following credentials<br>&nbsp;&nbsp;&nbsp;&nbsp;- **User:** `error_user`<br>&nbsp;&nbsp;&nbsp;&nbsp;- **Password:** `secret_sauce`<br>3. You should land on the `/inventory` page<br>4. Add all the items to the cart (every button changes from Add to Remove)<br>5. Click all Remove buttons. The items cannot be removed, and the ones already added cannot be added again |
+| **Expected result**    | We should be able to add and remove any item on the inventory page without a previous action blocking the next one                                                                                                                                                                                                                                                                                                                                                                           |
+| **Actual result**      | Some items cannot be removed from the cart, or added again once removed                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Severity**           | **Critical** (highly impacts the purchasing experience)                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+2. The README.md
+   [AI Boundary]: You may use AI to help format the markdown, but the architectural explanations must be your own words.
+   Include prerequisites, installation instructions, execution commands (UI vs API, Headless vs UI), and a brief explanation of your chosen framework architecture.
+
+3. Test Reporting (Optional but Highly Recommended)
+   Integrate a reporting tool (Playwright HTML Reporter, Allure, Mochawesome, etc.).
