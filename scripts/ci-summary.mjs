@@ -26,6 +26,7 @@ const status = failed.length === 0 ? 'PASSED' : 'FAILED'
 
 const escape = (text) =>
   String(text ?? '')
+    .replace(/\\/g, '\\\\')
     .replace(/\|/g, '\\|')
     .replace(/\n/g, ' ')
 
