@@ -79,7 +79,7 @@ jobs:
     name: Publish report to GitHub Pages
     needs: test
     # Only runs of the default branch publish, so unreviewed PR code never replaces the public report.
-    if: always() && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    if: ${{ always() && needs.test.result != 'skipped' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
